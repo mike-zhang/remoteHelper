@@ -1,0 +1,17 @@
+
+添加remote账号，并初始化：
+	
+	useradd remote
+	chgrp remote /root
+	su remote
+	ssh-keygen -t rsa
+	cd .ssh/    
+	touch authorized_keys
+	chmod 600 authorized_keys
+	
+通过命令执行SSH反向代理时，服务端只能通过127.0.0.1访问NAT后面的机器
+该问题可以通过服务端配置实现ssh监听0.0.0.0，具体配置如下：
+
+GatewayPorts yes
+	
+

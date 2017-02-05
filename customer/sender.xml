@@ -1,0 +1,15 @@
+<config>    
+    <serial>12345</serial>
+    <publicServer>192.168.1.31</publicServer>
+    <publicServerSSHUser>remote</publicServerSSHUser>
+    <publicServerSSHPort>22</publicServerSSHPort>
+
+    <remoteUrl>http://192.168.1.31:9092/tunnel-broker</remoteUrl>    
+    <local_ssh_port>22</local_ssh_port>
+    <local_http_port>8080</local_http_port>    
+
+    <tunnel_pid_path>/tmp/ssh_tunnel.pid</tunnel_pid_path> # local
+    <expire>3600</expire> seconds (connection and key expire)    
+    <date_loop_path>publicServer/date_loop</date_loop_path> # remote     
+
+</config>

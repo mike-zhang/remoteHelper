@@ -1,0 +1,20 @@
+<config>
+    <publicIP>192.168.1.31</publicIP>
+    <listenPort>9092</listenPort>
+    <max_connect_time>604800</max_connect_time>seconds
+    <enable_acl>1</enable_acl> 0 : disable , 1 : enable
+    <acl>
+        <ip>127.0.0.1</ip>
+        <ip>192.168.1.30</ip>
+        <ip>192.168.1.168</ip>
+    </acl>
+    
+    <mysql>
+        <host>127.0.0.1</host>
+        <port>3306</port>
+        <user>root</user>
+        <password></password>
+        <dbname>testdb</dbname>        
+    </mysql>
+    
+</config>

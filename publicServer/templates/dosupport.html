@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+<script>
+    function doAppStart(appname,serial,random_password,ssh_port)
+    {
+        var starter_url = "SupportStarter://serial="+ serial 
+        starter_url = starter_url + ",appname=" + appname;
+        starter_url = starter_url + ",rpd=" + random_password;
+        starter_url = starter_url + ",ssh_port=" + ssh_port;
+        var ua = navigator.userAgent.toLowerCase();        
+        if (ua.indexOf("firefox") > 0) {
+            newwindow = window.open(starter_url, "_blank");
+        } else {
+            location.href = starter_url;
+        }
+    }
+    
+    function startSSHTunnel(serial,random_password,ssh_port)
+    {        
+        doAppStart('putty',serial,random_password,ssh_port);
+    }
+
+    function startScpTunnel(serial,random_password,ssh_port)
+    {     
+        doAppStart('winscp',serial,random_password,ssh_port);
+    }
+
+</script>
+</head>
+
+<body>
+
+<h1>远程协助</h1>
+    <form action="/dosupport" method="post">
+        <table>            
+            {% if serial %}
+                <tr><td><a href="javascript:void(0)" onclick="startSSHTunnel({{serial}},'{{rpd}}',{{sshPort}})">打开ssh连接</a></td></tr>
+                <tr><td><a href="javascript:void(0)" onclick="startScpTunnel({{serial}},'{{rpd}}',{{sshPort}})">打开scp连接</a></td></tr>
+                <tr><td><a href="http://{{httpIP}}:{{httpPort}}" target="_blank">打开web</a></td></tr>            
+            {% else %}
+                <tr><td class="ex">Serial : </td> <td>
+                    <input type="text" name="serial" id="input_serial" value="12345" size="50">
+                    </td></tr>
+                <tr><td><input type="submit" value="提交"></td></tr>
+            {% endif %}            
+        </table>              
+    </form>    
+    
+</body>
+</html>

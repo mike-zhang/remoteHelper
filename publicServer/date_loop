@@ -1,0 +1,152 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import argparse
+from common import ObjDBConnect, ConfigData
+import time, os
+import tornado
+import sys, threading
+import traceback
+from socket import socket, AF_INET, SOCK_STREAM
+
+defaultConf = "default.xml"
+
+def genTunnelSql(queryPattern,dargs,portType):
+    flag = True
+    params = {
+        'customer_serial' : dargs["serial"],
+    }
+    if portType == "ssh":
+        params.update({
+            'public_port' : dargs["sshPort"],
+            'source_port' : dargs["sshSourcePort"],
+            'random_password' : dargs["random_password"],
+            'tunnel_type' : 1,
+        })
+    elif portType == "http":
+        params.update({
+            'public_port' : dargs["httpPort"],
+            'source_port' : dargs["httpSourcePort"],
+            'tunnel_type' : 2,
+        })
+    else :        
+        flag = False
+    skeys = "`%s`" % ("`,`".join(params.keys()))
+    svalues = "'%s'" % ("','".join(str(v) for v in params.values()))    
+    return flag,queryPattern.format(skeys, svalues)    
+
+def getDbConn():
+    cnf = ConfigData()
+    dbcon = ObjDBConnect(cnf.mysql_host, cnf.mysql_user,
+        cnf.mysql_password,cnf.mysql_dbname, cnf.mysql_port
+    )
+    return dbcon
+    
+def addTunnelParams(dbcon, dargs):
+    queryPattern = "insert into `ssh_tunnel_params` ({0}) values ({1});"
+    sqlArr = []    
+    def _addSql(tag):
+        flag, query = genTunnelSql(queryPattern,dargs,tag)
+        if flag :
+            sqlArr.append(query)
+    _addSql('ssh')
+    _addSql('http')
+    for query in sqlArr :
+        dbcon.execute(query)
+        print query
+    dbcon.commit()
+    
+def removeTunnelParams(dbcon, args):
+    queryPattern = "delete from ssh_tunnel_params where customer_serial='{0}' and local_port = {1};"
+    sqlArr = []
+    sqlArr.append(queryPattern.format(args.serial, args.sshPort))
+    sqlArr.append(queryPattern.format(args.serial, args.httpPort))
+    for query in sqlArr:
+        dbcon.execute(query)
+    dbcon.commit()
+
+def doTunnelOpt(tunnelFun,args):
+    dbcon = getDbConn()
+    tunnelFun(dbcon,args)
+    dbcon.close()
+    
+
+def check_acl(rhost):
+    cnf = ConfigData()    
+    if (cnf.enable_acl == 0) or (not cnf.acl):
+        return True
+    for ip in cnf.acl:
+        if ip.strip() == rhost.strip():
+            return True
+    return False
+    
+def call_back(stream, address):
+    print "connect from {0}".format(address)
+
+    if not check_acl(address[0]) :
+        stream.close()
+    else :
+        print "ok"
+        
+def main():
+    parser = argparse.ArgumentParser(description='update tunnel inf')
+    parser.add_argument('-serial',dest='serial',action='store',metavar='sn', required=True,type=str,
+                        help='customer serial number')    
+    parser.add_argument('-sshPort',dest='sshPort',action='store',metavar='port', required=True,type=int,
+                        help='ssh proxy port')
+    parser.add_argument('-sshSourcePort',dest='sshSourcePort',action='store',metavar='port', required=True,type=int,
+                        help='ssh proxy source port')
+    parser.add_argument('-httpPort',dest='httpPort',action='store',metavar='port', required=True,type=int,
+                        help='http proxy port')
+    parser.add_argument('-httpSourcePort',dest='httpSourcePort',action='store',metavar='port', required=True,type=int,
+                        help='http proxy source port')    
+    parser.add_argument('-rpd',dest='dpwd',action='store',metavar='dpd', required=True,type=str,
+                        help='random passwd')
+    parser.add_argument('-ttl',dest='ttl',action='store',metavar='ttl', required=True,type=int,
+                        help='ttl in seconds')    
+
+    args = parser.parse_args()    
+    print(args)# Output the collected arguments
+    print '*' * 30
+    
+    cnf = ConfigData()
+    print sys.argv[0]
+    
+    curdir = os.path.dirname(os.path.realpath(sys.argv[0]))
+    conffile = os.path.join(curdir, defaultConf)
+    cnf.load(conffile)
+
+    try :
+        dargs = {}
+        dargs["serial"] = args.serial
+        dargs["sshPort"] = args.sshPort
+        dargs["sshSourcePort"] = args.sshSourcePort
+        
+        dargs["httpPort"] = args.httpPort
+        dargs["httpSourcePort"] = args.httpSourcePort    
+        
+        dargs["random_password"] = args.dpwd
+        
+        doTunnelOpt(addTunnelParams, dargs)
+        
+        tend = time.time() + min(args.ttl,cnf.max_connect_time)
+        pcmd = "netstat -ant | grep LISTEN"
+        hostprefix = "0.0.0.0"
+        while time.time() < tend :
+            ntstr = os.popen(pcmd).read()        
+            sshExist = ntstr.find("{0}:{1}".format(hostprefix,args.sshPort)) > -1
+            httpExist = ntstr.find("{0}:{1}".format(hostprefix,args.httpPort)) > -1
+            if not (sshExist and httpExist):
+                print "break"
+                break
+            time.sleep(5)   
+        # do remove
+        doTunnelOpt(removeTunnelParams,args)
+    except :
+        print "error occur"
+        print traceback.format_exc()   
+    
+    
+if __name__ == "__main__":
+    main()   
+

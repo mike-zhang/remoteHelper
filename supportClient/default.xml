@@ -1,0 +1,4 @@
+<config>
+    <pubServer>192.168.131.123</pubServer>
+    <remoteUser>root</remoteUser>
+</config>

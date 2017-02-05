@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+
+<head>
+<meta charset="utf-8" />
+<title>RemoteSender</title>
+
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+    <h3>RemoteHelper</h3>
+    
+    <table>
+        <tr>            
+            <td>            
+                <form action="/startSSHTunnel" method="post">
+                    <input type="submit" value="Start">                
+                </form>        
+            </td>
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;</td> 
+            <td>            
+                <form action="/stopSSHTunnel" method="get">
+                    <input type="submit" value="Stop">
+                </form>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

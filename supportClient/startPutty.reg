@@ -1,0 +1,11 @@
+Windows Registry Editor Version 5.00
+[HKEY_CLASSES_ROOT\SupportStarter]
+"URL Protocol"="c:\\supportClient\\SupportStarter.exe"
+@="TencentProtocol"
+[HKEY_CLASSES_ROOT\SupportStarter\DefaultIcon]
+@="c:\\supportClient\\SupportStarter.exe,1"
+[HKEY_CLASSES_ROOT\SupportStarter\shell]
+[HKEY_CLASSES_ROOT\SupportStarter\shell\open]
+[HKEY_CLASSES_ROOT\SupportStarter\shell\open\command]
+@="\"c:\\supportClient\\SupportStarter.exe\" \"%1\""
+
